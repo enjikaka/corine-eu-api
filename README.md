@@ -9,7 +9,9 @@ Uses the [Corine Land Cover data from 2012 provided by the European Environment 
 ### Request
 
 **URL**: `/`
+
 **Method**: `GET`
+
 **URL params**: `?lat=[number]&long=[number]` || `?ocl=[OpenLocationCode]`
 
 ### Response
