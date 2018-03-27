@@ -1,4 +1,4 @@
-# Corine API
+# Corine EU API
 
 This is a serverless function that gives you the Corine Land Cover information of an [Open Location Code](https://github.com/google/open-location-code) within the EU.
 
