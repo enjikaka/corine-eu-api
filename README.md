@@ -25,3 +25,18 @@ Content:
   terrainTypes: string[]
 }
 ```
+
+#### Example response
+
+```
+
+{
+  "openLocationCode":"9FFJMH3M+4G",
+  "terrainTypes": [
+    "Industrial or commercial units",
+    "Water bodies"
+  ]
+}
+```
+
+[View 9FFJMH3M+4G on the map](https://plus.codes/9FFJMH3M+4G)
