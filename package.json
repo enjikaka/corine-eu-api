@@ -1,0 +1,19 @@
+{
+  "name": "corine-api",
+  "version": "1.0.0",
+  "description": "Serverless function to get Corine Land Cover info in the EU",
+  "main": "index.js",
+  "scripts": {
+    "deploy": "wt create -p node8 corine-api"
+  },
+  "author": "Jeremy Karlsson <karlsson@jeremy.se>",
+  "license": "ISC",
+  "dependencies": {
+    "@esri/arcgis-to-geojson-utils": "^1.1.1",
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2",
+    "node-fetch": "^2.1.2",
+    "open-location-code": "^1.0.3",
+    "webtask-tools": "^3.2.0"
+  }
+}

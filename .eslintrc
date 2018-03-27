@@ -1,0 +1,7 @@
+{
+  "extends": "tidal",
+  "env": {
+    "node": true,
+    "es6": true
+  }
+}
