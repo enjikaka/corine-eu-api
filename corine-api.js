@@ -9,7 +9,9 @@ const olcInstance = new OpenLocationCode();
 
 const app = express();
 
-app.use(bodyParser.json());
+app.use(bodyParser.raw({
+  type: 'text/csv'
+}));
 
 /**
  * @typedef {DecodedOpenLocationCode}
@@ -75,29 +77,20 @@ function getArcGISPolygon (decodedOpenLocationCode) {
   return Object.assign({}, geojsonToArcGIS(wsg84geoJSONPolygon), { spatialReference: 102100 });
 }
 
-app.get('/', function (req, res) {
-  const lat = parseFloat(req.query.lat);
-  const long = parseFloat(req.query.long);
+const layerInfoURL = 'http://copernicus.discomap.eea.europa.eu/arcgis/rest/services/Corine/CLC2012_WM/MapServer/0?f=json';
+const layerPromise = fetch(layerInfoURL).then(r => r.json());
 
-  const queryOCL = req.query.ocl ? req.query.ocl.replace(/\s/, '+') : undefined;
-
-  const openLocationCode = queryOCL || olcInstance.encode(lat, long);
-  const decodedOCL = olcInstance.decode(openLocationCode);
-
+function getTerrainDataFromPlotCode (plotCode) {
+  const decodedOCL = olcInstance.decode(plotCode);
   const { xmin, ymin, xmax, ymax } = getBoundsInMeters(decodedOCL);
   const arcgisbbox = encodeURIComponent(`${xmin},${ymin},${xmax},${ymax}`);
 
   const arcgisPolygon = getArcGISPolygon(decodedOCL);
 
-  // const imageUrl = `http://copernicus.discomap.eea.europa.eu/arcgis/rest/services/Corine/CLC2012_WM/MapServer/export?transparent=true&format=png&bbox=${arcgisbbox}&size=500%2C4&f=image`;
-
   const identifyUrl = `http://copernicus.discomap.eea.europa.eu/arcgis/rest/services/Corine/CLC2012_WM/MapServer/identify?geometry=${encodeURIComponent(JSON.stringify(arcgisPolygon))}&geometryType=esriGeometryPolygon&tolerance=2&mapExtent=${arcgisbbox}&imageDisplay=10%2C10%2C96&returnGeometry=false&f=pjson`;
-  const layerInfoURL = 'http://copernicus.discomap.eea.europa.eu/arcgis/rest/services/Corine/CLC2012_WM/MapServer/0?f=json';
-
   const tilePromise = fetch(identifyUrl).then(r => r.json());
-  const layerPromise = fetch(layerInfoURL).then(r => r.json());
 
-  Promise.all([
+  return Promise.all([
     tilePromise,
     layerPromise
   ]).then(([tileData, layerData]) => {
@@ -107,6 +100,34 @@ app.get('/', function (req, res) {
       .filter(info => terrainValues.indexOf(info.value) !== -1)
       .map(info => info.label.split(':')[1].trim());
 
+    const obj = {};
+
+    obj[plotCode] = terrainTypes;
+
+    return obj;
+  });
+}
+
+app.post('/', function (req, res) {
+  const plotCodes = req.body.toString('utf8').split(',');
+
+  const promises = plotCodes.map(getTerrainDataFromPlotCode);
+
+  Promise.all(promises).then(results => {
+    res.end(JSON.stringify(Object.assign({}, ...results)));
+  }).catch(error => res.status(500).end(error.message));
+});
+
+app.get('/', function (req, res) {
+  const lat = parseFloat(req.query.lat);
+  const long = parseFloat(req.query.long);
+
+  const queryOCL = req.query.ocl ? req.query.ocl.replace(/\s/, '+') : undefined;
+
+  const openLocationCode = queryOCL || olcInstance.encode(lat, long);
+  // const imageUrl = `http://copernicus.discomap.eea.europa.eu/arcgis/rest/services/Corine/CLC2012_WM/MapServer/export?transparent=true&format=png&bbox=${arcgisbbox}&size=500%2C4&f=image`;
+
+  getTerrainDataFromPlotCode(openLocationCode).then(terrainTypes => {
     res.send({ openLocationCode, terrainTypes });
   }).catch(error => {
     res.status(500).end(error);
