@@ -114,7 +114,8 @@ app.post('/', function (req, res) {
   const promises = plotCodes.map(getTerrainDataFromPlotCode);
 
   Promise.all(promises).then(results => {
-    res.end(JSON.stringify(Object.assign({}, ...results)));
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify(Object.assign({}, ...results)));
   }).catch(error => res.status(500).end(error.message));
 });
 
@@ -128,6 +129,7 @@ app.get('/', function (req, res) {
   // const imageUrl = `http://copernicus.discomap.eea.europa.eu/arcgis/rest/services/Corine/CLC2012_WM/MapServer/export?transparent=true&format=png&bbox=${arcgisbbox}&size=500%2C4&f=image`;
 
   getTerrainDataFromPlotCode(openLocationCode).then(terrainTypes => {
+    res.setHeader('Content-Type', 'application/json');
     res.send({ openLocationCode, terrainTypes });
   }).catch(error => {
     res.status(500).end(error);
